@@ -9,8 +9,8 @@ import 'package:image/image.dart' as img;
 import 'package:logging/logging.dart';
 import 'package:simple_frame_app/text_utils.dart';
 import 'package:simple_frame_app/simple_frame_app.dart';
-import 'package:simple_frame_app/tx/sprite.dart';
-import 'package:simple_frame_app/tx/plain_text.dart';
+import 'package:frame_msg/tx/sprite.dart';
+import 'package:frame_msg/tx/plain_text.dart';
 
 void main() => runApp(const MainApp());
 
@@ -93,8 +93,8 @@ class MainAppState extends State<MainApp> with SimpleFrameAppState {
         // send text to Frame
         String text = '${event.title}\n${event.text}\n${event.raw!["subText"]}';
         if (text != _prevText) {
-          String wrappedText = TextUtils.wrapText(text, 500, 4);
-          await frame?.sendMessage(TxPlainText(msgCode: 0x0a, text: wrappedText));
+          List<String> wrappedText = TextUtils.wrapText(text, 500, 4);
+          await frame?.sendMessage(0x0a, TxPlainText(text: wrappedText.join("\n")).pack());
           _prevText = text;
         }
 
@@ -120,14 +120,13 @@ class MainAppState extends State<MainApp> with SimpleFrameAppState {
               _log.finest('QuantizedImage bytes: $qImageBytes');
 
               // send image message (header and image data) to Frame
-              await frame?.sendMessage(TxSprite(
-                msgCode: 0x0d,
+              await frame?.sendMessage(0x0d, TxSprite(
                 width: qImage.width,
                 height: qImage.height,
                 numColors: qImage.palette!.lengthInBytes ~/ 3,
                 paletteData: qImage.palette!.toUint8List(),
                 pixelData: qImageBytes
-              ));
+              ).pack());
             }
           }
         }
