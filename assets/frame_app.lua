@@ -33,14 +33,14 @@ end
 -- Main app loop
 function app_loop()
     local last_batt_update = 0
+    frame.display.text('Awaiting Navigation', 1, 1)
+    frame.display.show()
+
     while true do
         rc, err = pcall(
             function()
                 -- process any raw items, if ready (parse into image or text, then clear raw)
                 local items_ready = data.process_raw_items()
-
-                -- TODO tune sleep durations to optimise for data handler and processing
-                frame.sleep(0.005)
 
                 -- only need to print it once when it's ready, it will stay there
                 -- but if we print either, then we need to print both because a draw call and show
@@ -54,9 +54,6 @@ function app_loop()
                     end
                     frame.display.show()
                 end
-
-                -- TODO tune sleep durations to optimise for data handler and processing
-                frame.sleep(0.005)
 
                 -- periodic battery level updates
                 last_batt_update = battery.send_batt_if_elapsed(last_batt_update, 180)
