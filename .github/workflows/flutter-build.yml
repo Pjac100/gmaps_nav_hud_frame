@@ -1,0 +1,70 @@
+name: Build Flutter App
+
+# Controls when the workflow runs
+on:
+  push:
+    branches:
+      - main # Or master, develop, or your main development branch
+      # Add other branches if needed:
+      # - feature/*
+  pull_request:
+    branches:
+      - main # Or master, develop
+  workflow_dispatch: # Allows you to trigger this workflow manually from the Actions tab
+
+jobs:
+  build_debug_apk:
+    name: Build Flutter Debug APK
+    runs-on: ubuntu-latest # Uses the latest available Ubuntu runner
+
+    steps:
+      # Step 1: Check out the repository's code
+      - name: Checkout code
+        uses: actions/checkout@v4
+        # This checks out the code from the repository where this workflow file resides.
+
+      # Step 2: Set up Java Development Kit (JDK) - Flutter needs this for Android builds
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17' # A common version compatible with modern Android/Flutter
+
+      # Step 3: Set up Flutter SDK
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable' # Uses the latest stable Flutter SDK.
+                            # You might need to change this to 'beta', 'dev', or a specific
+                            # version (e.g., '3.19.0') if the project requires it.
+                            # Check with "the dev" if a specific Flutter version is needed.
+
+      # Step 4: Install Flutter project dependencies
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      # Step 5: (Optional but good practice) Ensure gradlew is executable
+      # Flutter uses this script to run Gradle tasks for the Android build.
+      - name: Ensure gradlew is executable
+        run: |
+          if [ -f "android/gradlew" ]; then
+            chmod +x android/gradlew
+          else
+            echo "android/gradlew not found, skipping chmod."
+          fi
+
+      # Step 6: Build the debug APK
+      - name: Build Debug APK
+        run: flutter build apk --debug
+        # If you encounter build failures due to Android Gradle Plugin (AGP) or Kotlin
+        # version warnings from Flutter, you can try adding this flag:
+        # run: flutter build apk --debug --android-skip-build-dependency-validation
+
+      # Step 7: Upload the generated APK as an artifact
+      # This makes the APK downloadable from the workflow run's summary page.
+      - name: Upload Debug APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug.apk # Name of the artifact you'll download
+          path: build/app/outputs/flutter-apk/app-debug.apk # Standard path for Flutter debug APKs
+          if-no-files-found: error # Fail the workflow if the APK isn't found
